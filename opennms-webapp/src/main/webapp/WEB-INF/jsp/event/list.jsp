@@ -46,6 +46,8 @@
 <%@page import="org.opennms.web.event.EventQueryParms"%>
 <%@page import="org.opennms.web.event.EventUtil"%>
 
+<%@page	import="org.opennms.web.controller.event.EventPurgeController"%>
+<%@page	import="org.opennms.web.controller.event.EventExportController"%>
 <%@page import="org.opennms.web.controller.event.AcknowledgeEventController"%>
 
 <%@page import="org.opennms.web.event.filter.SeverityFilter"%>
@@ -98,6 +100,9 @@
     pageContext.setAttribute("addNegativeFilter", "[-]");
     pageContext.setAttribute("addBeforeFilter", "[&gt;]");
     pageContext.setAttribute("addAfterFilter", "[&lt;]");
+    //Get the purge action status
+    String actionStatus = (String) req.getSession().getAttribute("actionStatus");
+
 %>
 
 
@@ -111,7 +116,7 @@
   <jsp:param name="breadcrumb" value="<a href= 'event/index.jsp' title='Events System Page'>Events</a>" />
   <jsp:param name="breadcrumb" value="List" />
 </jsp:include>
-
+<script type="text/javascript" src="<c:url value="/js/jquery/jquery.js"/>"></script>
   <script type="text/javascript">
     function checkAllCheckboxes() {
        if( document.acknowledge_form.event.length ) {  
@@ -129,6 +134,88 @@
     {
         var isChecked = false
         var numChecked = 0;
+		var isEventAvailabilty = false;
+		var isPurgeExport = true;
+
+		if(anAction == "purge" || anAction == "purgeall"){
+		document.acknowledge_form.action = "event/purgeEvents";
+		} else if(anAction == "export" || anAction == "exportall") {
+		document.acknowledge_form.action = "event/exportEvents";
+		}
+    // Decide what our action should be
+    if (anAction == "purge") {
+		document.acknowledge_form.actionCode.value = "<%=EventPurgeController.PURGE_ACTION%>";
+  	} else if (anAction == "purgeall") {
+		document.acknowledge_form.actionCode.value = "<%=EventPurgeController.PURGEALL_ACTION%>";
+	}else if (anAction == "export") {
+		document.acknowledge_form.actionCode.value = "<%=EventExportController.EXPORT_ACTION%>";
+  	} else if (anAction == "exportall") {
+  		document.acknowledge_form.actionCode.value = "<%=EventExportController.EXPORTALL_ACTION%>";
+	}//Check the event availability
+	for (i = 0; i < document.acknowledge_form.elements.length; i++) {
+		if (document.acknowledge_form.elements[i].name == "event") {
+			isEventAvailabilty = true;
+		}
+	}
+
+		//Get the event count
+		var eventCount =<%=eventCount%>;
+		if ((anAction == "purge" || anAction == "export" ) && isEventAvailabilty) {
+			eventCount = 0;
+			if (document.acknowledge_form.event.length) {
+				for (i = 0; i < document.acknowledge_form.event.length; i++) {
+					//make sure something is checked before proceeding
+					if (document.acknowledge_form.event[i].checked) {
+						eventCount += 1;
+					}
+				}
+			} else {
+				if (document.acknowledge_form.event.checked) {
+					eventCount += 1;
+				}
+			}
+		}
+	
+        //Get the confirmation status for purge and export action
+        var regularNoun = (parseInt(eventCount) == 1) ? 'event' : 'events';
+
+        if (anAction == "purge" && parseInt(eventCount) > 0) {
+        	isPurgeExport = false;
+                var confirmText ='Note:Events with correlated alarms will not be purged.Are you sure you want to purge selected '
+                                + regularNoun
+                                + ' ? ('
+                                + eventCount
+                                + ' total '
+                                + regularNoun + ')';
+                if (confirm(confirmText)) {
+                        isPurgeExport = true;
+                } else {
+                        isPurgeExport = false;
+                }
+        }else if (anAction == "export" && parseInt(eventCount) > 0) {
+		isPurgeExport = false;
+        var confirmText = 'Are you sure you want to export ' + regularNoun
+                                                + ' ? (' + eventCount + ' total ' + regularNoun + ')';
+       	showPopup(confirmText);
+        } else if (anAction == "purgeall") {
+	
+           if (confirm("Note:Events with correlated alarms will not be purged.Are you sure to purge the filtered events? ")) {
+                        isPurgeExport = true;
+                } else {
+                        isPurgeExport = false;
+                }
+        } else  if (anAction == "exportall") {
+		isPurgeExport = false;
+		var confirmText = "Are you sure you want to  exportall  the  filtered  events ?";
+
+	        showPopup(confirmText);
+        }
+
+		
+		
+if (isPurgeExport)
+			if (isEventAvailabilty) {
+				if (anAction != "purgeall") {
  
         if (document.acknowledge_form.event.length)
         {
@@ -178,6 +265,20 @@
                 alert("Please check the events that you would like to " + anAction + ".");
             }
         }
+        } else {
+        	if(document.acknowledge_form.multiple){
+                var findVal = "multiple=" + document.acknowledge_form.multiple.value;
+                var replaceWith = "multiple=0" ;
+                var tmpRedirect = document.acknowledge_form.redirectParms.value;
+                document.acknowledge_form.redirectParms.value = tmpRedirect.replace(findVal, replaceWith);
+              }
+                  		
+					document.acknowledge_form.submit();
+    }
+			} else {
+				alert("There is currently no events in this category to "
+						+ anAction + ".");
+			}
     }
     
     function submitNewNotificationForm(uei) {
@@ -262,10 +363,31 @@
               </p>
             <% } %>
 
+		<!-- Popup message box for event export action -->
+	<div id="exportConfirmation" style="display:none">
+		<center>
+			<div id="alertText">&nbsp;</div>
+			Select your file format : 
+			<input type="radio" name="format" value="PDF" checked="checked">PDF
+			<input type="radio" name="format" value="HTML">HTML
+			<input type="radio" name="format" value="CSV">CSV<br><br>
+			<input type="button" onclick="javascript:callEventExportAction();" value="Ok" />
+			<input type="button" onclick="javascript:hideTransBackground();" value="Cancel"/>
+		</center>
+	</div>
     <% if( req.isUserInRole( Authentication.ROLE_ADMIN ) || !req.isUserInRole( Authentication.ROLE_READONLY ) ) { %>
       <form action="event/acknowledge" method="post" name="acknowledge_form">
         <input type="hidden" name="redirectParms" value="<c:out value="<%=req.getQueryString()%>"/>" />
         <input type="hidden" name="actionCode" value="<%=action%>" />
+
+	<!-- Hidden datas for event/purge and export  -->
+	<input type="hidden" name="nodeid" value="node=" /> 
+	<input type="hidden" name="exactuei" value="exactUei=" /> 
+	<input type="hidden" name="ipaddress" value="interface=" />
+        <input type="hidden" name="format" value="pdf" />
+	<input type="hidden" name="reportId" value="local_event-report" />
+	<div id="backgroundPopup"></div>
+	<body />
         <%=org.opennms.web.api.Util.makeHiddenTags(req)%>
     <% } %>
                 <jsp:include page="/includes/key.jsp" flush="false" />
@@ -286,6 +408,7 @@
 							<th width="2%">&nbsp;</th>
 						<% } %>
           <% } %>
+          <th width="4%"> Select</th>
           <th width="4%"> <%=this.makeSortLink( parms, SortStyle.ID,        SortStyle.REVERSE_ID,        "id",        "ID"        )%></th>
           <th width="10%"><%=this.makeSortLink( parms, SortStyle.SEVERITY,  SortStyle.REVERSE_SEVERITY,  "severity",  "Severity"  )%></th>
           <th width="19%"><%=this.makeSortLink( parms, SortStyle.TIME,      SortStyle.REVERSE_TIME,      "time",      "Time"      )%></th>
@@ -300,7 +423,7 @@
       %>
       
         <tr valign="top" class="<%=events[i].getSeverity().getLabel()%>">
-          <% if( "true".equals(acknowledgeEvent) ) { %>
+	<%--if( "true".equals(acknowledgeEvent) ) { --%> 
 						<% if( request.isUserInRole( Authentication.ROLE_ADMIN ) || !req.isUserInRole( Authentication.ROLE_READONLY ) ) { %>
 						<td valign="top" rowspan="3" class="divider">
 									<input type="checkbox" name="event" value="<%=events[i].getId()%>" /> 
@@ -308,7 +431,7 @@
 							<% } else { %>
 								<td valign="top" rowspan="3" class="divider">&nbsp;</td>
 							<% } %>
-            <% } %>
+	<%--} --%>
 
           <td valign="top" rowspan="3" class="divider"><a href="event/detail.jsp?id=<%=events[i].getId()%>"><%=events[i].getId()%></a></td>
           
@@ -422,6 +545,22 @@
         
         <p><%=events.length%> events
           <% 
+                	if( (req.isUserInRole( Authentication.ROLE_ADMIN ) || !req.isUserInRole( Authentication.ROLE_READONLY ))) {
+                %>
+		<input TYPE="reset" /> <input TYPE="button" VALUE="Select All"
+			onClick="checkAllCheckboxes()" /> <select name="eventAction">
+			<optgroup label="Export Events">
+				<option value="export">Export Selected</option>
+	        		<option value="exportall">Export All</option>
+	   		</optgroup>
+			<optgroup label="Purge Events">
+				<option value="purge">Purge Selected</option>
+				<option value="purgeall">Purge All</option>
+			</optgroup>
+		</select> <input type="button" value="Go"
+			onClick="submitForm(document.acknowledge_form.eventAction.value)" />
+		<%
+			}
           if( (req.isUserInRole( Authentication.ROLE_ADMIN ) || !req.isUserInRole( Authentication.ROLE_READONLY )) && "true".equals(acknowledgeEvent)) { %>
             <% if( parms.ackType == AcknowledgeType.UNACKNOWLEDGED ) { %>
               <input type="button" value="Acknowledge Events" onClick="submitForm('<%= AcknowledgeType.UNACKNOWLEDGED.getShortName() %>')"/>
@@ -584,3 +723,20 @@
          return desc;
     }
 %>
+<script type="text/javascript">
+    //Action status for purge and export
+    var actionStatus = "<%=actionStatus%>";
+    var seperateStatus = actionStatus.split(",");
+    if(actionStatus != "null"){
+	    if(seperateStatus[0] == "P" || seperateStatus[0] == "E"){
+		if(parseInt(seperateStatus[1]) >= 0){
+			alert("Your Job ["+seperateStatus[1]+"] is successfully created.Please wait, your purge or export action is in progress...");
+		} else if(parseInt(seperateStatus[1]) == -2) {
+			alert("Already purge or export action is in progress, please try after some time...");
+		} else {
+			alert("Unable to create your job. Please check the log files");
+		}
+	    } 
+    }
+</script>
+<% request.getSession().setAttribute("actionStatus", "null"); %>

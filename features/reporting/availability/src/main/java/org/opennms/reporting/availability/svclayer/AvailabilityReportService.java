@@ -315,7 +315,7 @@ public class AvailabilityReportService implements ReportService {
     
     /** {@inheritDoc} */
     public void	runAndRender(List<Integer> alarmIds,HashMap<Integer, List<Integer>> eventIdsForAlarms ,
-        		String reportId, ReportFormat reportFormat, OutputStream outputStream, String fileName){
+        		String reportId, ReportFormat reportFormat, String fileName, String folderName){
     	throw new UnsupportedOperationException("Not supported yet. AvailabilityReportService is deprecated.");
     }
     
@@ -340,7 +340,7 @@ public class AvailabilityReportService implements ReportService {
     /**
      * <p>setConfigDao</p>
      *
-     * @param configDao a {@link org.opennms.netmgt.dao.api.OnmsReportConfigDao} object.
+     * @param configDao a {@link org.opennms.netmgt.dao.OnmsReportConfigDao} object.
      */
     public void setConfigDao(OnmsReportConfigDao configDao) {
         m_configDao = configDao;
@@ -357,7 +357,7 @@ public class AvailabilityReportService implements ReportService {
 
 	@Override
 	public void runAndRender(List<Integer> eventIds, String reportId,
-			ReportFormat reportFormat, OutputStream outputStream)
+			ReportFormat reportFormat, String fileName,String folderName)
 			throws ReportException {
 		throw new UnsupportedOperationException("Not supported yet. AvailabilityReportService is deprecated.");
 		

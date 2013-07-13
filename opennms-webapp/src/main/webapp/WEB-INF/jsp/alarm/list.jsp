@@ -106,7 +106,7 @@
     pageContext.setAttribute("addBeforeFilter", "[&gt;]");
     pageContext.setAttribute("addAfterFilter", "[&lt;]");
     
-    //Get the purge action status
+    //Get the action status for purge and export
     String actionStatus = (String) req.getSession().getAttribute("actionStatus");
     
     final String baseHref = org.opennms.web.api.Util.calculateUrlBase(request);
@@ -202,7 +202,8 @@
 		
 		//Get the confirmation status for purge action
 		var regularNoun = (parseInt(alarmCount) == 1)?'alarm':'alarms';
-		var confirmText = (anAction=="purge" || anAction=="export" )? 'Are you sure you want to '+anAction+' selected '+regularNoun+' ? ('+alarmCount+' total '+regularNoun+')' : 'Are you sure you want to '+anAction+' '+regularNoun+' ? ('+alarmCount+' total '+regularNoun+')';
+		var confirmText = '';
+		confirmText = (anAction=="purge" || anAction=="export" )? confirmText+ 'Are you sure you want to '+anAction+' selected '+regularNoun+' ? ('+alarmCount+' total '+regularNoun+')' : confirmText+'Are you sure you want to '+anAction+' '+regularNoun+' ? ('+alarmCount+' total '+regularNoun+')';
 		if((anAction == "purge" || anAction == "purgeall") && parseInt(alarmCount)>0) {
 			if(confirm(confirmText)){
 				isPurgeExport = true;
@@ -245,14 +246,10 @@
 					} else {
 						document.alarm_action_form.submit();
 					}
-					if(anAction == "purge")
-					getProgressBar();
 					}
 				    else if (isChecked)
 				    {
 					document.alarm_action_form.submit();
-					if(anAction == "purge")
-					getProgressBar();
 				    }
 				    else
 				    {
@@ -262,8 +259,6 @@
 				    if (document.alarm_action_form.alarm.checked)
 				    {
 					document.alarm_action_form.submit();
-					if(anAction == "purge")
-					getProgressBar();
 				    }
 				    else
 				    {
@@ -272,16 +267,11 @@
 				}
 			}else{
 				document.alarm_action_form.submit();
-				getProgressBar();
 			}
 		}else{
 			alert("There is currently no alarms for this category to " + anAction + ".");
 		}
 	}
-    
-	// Progress bar for purge and export action
-	progressBar(100, $('#progressBar'));
-	
 	</script>
   
       <!-- menu -->
@@ -353,10 +343,9 @@
 	<!-- Popup message box for alarm export action -->
 	<div id="exportConfirmation" style="display:none">
 		<center>
-			<div id="alertText">&nbsp;</div><br>
-			Select your file format : 
+			<div id="alertText">&nbsp;</div>
+			<br>Select your file format : 
 			<input type="radio" name="format" value="PDF" checked="checked">PDF
-			<!-- <input type="radio" name="format" value="XLS">XLS -->
 			<input type="radio" name="format" value="HTML">HTML
 			<input type="radio" name="format" value="CSV">CSV<br><br>
 			<input type="button" onclick="javascript:callExportAction();" value="Ok" />
@@ -370,12 +359,8 @@
           <input type="hidden" name="actionCode" value="<%=action%>" />
 	  
 	  <!-- Hidden datas for alarm purge and export action-->
-	  <input type="hidden" name="nodeid" value="node=" />
-	  <input type="hidden" name="exactuei" value="exactUei=" />
-	  <input type="hidden" name="ipaddress" value="interface=" />
 	  <input type="hidden" name="format" value="pdf" />
 	  <input type="hidden" name="reportId" value="local_alarm-report" />
-	  <div id="progressBar" class="jquery-ui-like"><div><center>Action in progress, Please wait...</center></div></div>
 	  <div id="backgroundPopup"></div><body/>
 	  
           <%=Util.makeHiddenTags(req)%>
@@ -600,7 +585,6 @@
         <% } %>
           <option value="clear">Clear Alarms</option>
           <option value="escalate">Escalate Alarms</option>
-	 <!--
 	  <optgroup label="Export Alarms">
 	        <option value="exportall">Export All</option>
           	<option value="export">Export Selected</option>
@@ -609,7 +593,6 @@
 	        <option value="purgeall">Purge All</option>
           	<option value="purge">Purge Selected</option>
 	   </optgroup>
-	  -->
           </select>
           <input type="button" value="Go" onClick="submitForm(document.alarm_action_form.alarmAction.value)" />
       <% } %>
@@ -632,8 +615,6 @@
                 <jsp:param name="multiple" value="<%=parms.multiple%>"   />
               </jsp:include>
             <% } %>
-
-
 <jsp:include page="/includes/bookmark.jsp" flush="false" />
 <jsp:include page="/includes/footer.jsp" flush="false" />
 
@@ -785,15 +766,19 @@
     }
 %>
 <script type="text/javascript">
-   //Query status for the purge action
+    //Action status for purge and export
     var actionStatus = "<%=actionStatus%>";
     var seperateStatus = actionStatus.split(",");
-    var regularNoun = (parseInt(seperateStatus[0]) == 1)?'alarm is':'alarms are';
-    var queryStatus = seperateStatus[1];
-    if(queryStatus == "<%=AlarmPurgeController.SUCCESS_ACTION%>"){
-	alert("The "+regularNoun+" successfully deleted from the DB");
-    }else if(queryStatus == "<%=AlarmPurgeController.FAILURE_ACTION%>"){
-	alert("The "+regularNoun+" not able to delete from the DB");
+    if(actionStatus != "null"){
+	    if(seperateStatus[0] == "P" || seperateStatus[0] == "E"){
+		if(parseInt(seperateStatus[1]) >= 0){
+			alert("Your Job ["+seperateStatus[1]+"] is successfully created.Please wait, your purge or export action is in progress...");
+		} else if(parseInt(seperateStatus[1]) == -2) {
+			alert("Already purge or export action is in progress, please try after some time...");
+		} else {
+			alert("Unable to create your job. Please check the log files");
+		}
+	    }
     }
 </script>
 <% request.getSession().setAttribute("actionStatus", "null"); %>

@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.netmgt.dao.api;
+package org.opennms.netmgt.dao;
 
 import java.util.Date;
 import java.util.List;
@@ -194,7 +194,7 @@ public interface AlarmRepository {
    	 * @return a list of {@link java.lang.String} object.
    	 */
     public List<String> getFilterStringsForEvent(OnmsAlarm alarm);
-    
+    	   
     /**
      * Delete an alarm by id 
      * @param alarmId an int type.
@@ -212,4 +212,5 @@ public interface AlarmRepository {
      * @param refId an int type.
      */
     public abstract int purgeAcknowledge(int refId);
+
 }

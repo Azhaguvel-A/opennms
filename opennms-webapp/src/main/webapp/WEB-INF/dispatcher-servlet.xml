@@ -290,6 +290,7 @@
 	<property name="alarmRepository" ref="alarmRepository"/>
 	<property name="webEventRepository" ref="webEventRepository"/>
 	<property name="reportWrapperService" ref="reportWrapperService"/>
+	<property name="redirectView" value="/alarm/list.htm"/>
     </bean>
 
     <bean name="/alarm/list.htm" class="org.opennms.web.controller.alarm.AlarmFilterController">
@@ -310,13 +311,13 @@
     <bean name="/event/purgeEvents" class="org.opennms.web.controller.event.EventPurgeController">
 	<property name="redirectView" value="/event/list.htm"/>
 	<property name="webEventRepository" ref="webEventRepository"/>
-        <property name="alarmRepository" ref="alarmRepository"/>
     </bean>
 
 <!-- Bean for EventExportController-->
     <bean name="/event/exportEvents" class="org.opennms.web.controller.event.EventExportController">
 	<property name="webEventRepository" ref="webEventRepository"/>
 	<property name="reportWrapperService" ref="reportWrapperService"/>
+	<property name="redirectView" value="/event/list.htm"/>
     </bean>
     
     <bean name="/event/acknowledgeByFilter" class="org.opennms.web.controller.event.AcknowledgeEventByFilterController">

@@ -306,19 +306,19 @@ public class DefaultReportWrapperService implements ReportWrapperService {
 
     /** {@inheritDoc} */
     public void	getAlarmReport(List<Integer> alarmIds,HashMap<Integer, List<Integer>> eventIdsForAlarms ,
-        		String reportId, ReportFormat reportFormat, OutputStream outputStream, String fileName){
+        		String reportId, ReportFormat reportFormat, String fileName, String folderName){
     	try {
-    		getReportService(reportId).runAndRender(alarmIds,eventIdsForAlarms,reportId,reportFormat,outputStream, fileName);
+    		getReportService(reportId).runAndRender(alarmIds,eventIdsForAlarms,reportId,reportFormat, fileName, folderName);
 		} catch (ReportException reportException) {
 			LOG.error("failed to run or render report: {}", reportId, reportException);
 		}
     }
     @Override
 	public void getEventReport(List<Integer> eventIds, String reportId,
-			ReportFormat reportFormat, OutputStream outputStream) {
+			ReportFormat reportFormat,String fileName,String dirName) {
 
     	try {
-    		getReportService(reportId).runAndRender(eventIds,reportId,reportFormat,outputStream);
+    		getReportService(reportId).runAndRender(eventIds,reportId,reportFormat,fileName,dirName);
 		} catch (ReportException reportException) {
 			LOG.error("failed to run or render report: {}", reportId, reportException);
 		}

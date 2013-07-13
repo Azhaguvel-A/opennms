@@ -31,7 +31,6 @@ package org.opennms.netmgt.dao.hibernate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,11 +39,11 @@ import org.hibernate.criterion.Restrictions;
 import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.core.utils.BeanUtils;
 import org.opennms.core.utils.InetAddressUtils;
+import org.opennms.netmgt.dao.api.AlarmDao;
 import org.opennms.netmgt.dao.api.EventDao;
 import org.opennms.netmgt.dao.api.AcknowledgmentDao;
-import org.opennms.netmgt.dao.api.AlarmDao;
-import org.opennms.netmgt.dao.api.AlarmRepository;
 import org.opennms.netmgt.dao.api.MemoDao;
+import org.opennms.netmgt.dao.api.AlarmRepository;
 import org.opennms.netmgt.model.AckAction;
 import org.opennms.netmgt.model.AckType;
 import org.opennms.netmgt.model.OnmsAcknowledgment;
@@ -357,41 +356,58 @@ public class AlarmRepositoryHibernate implements AlarmRepository, InitializingBe
     
     @Override
     @Transactional
-	public void purgeAlarms(List<Integer> alarmIds) {
-    	for(Integer alarmId : alarmIds){
-    		//Delete an alarm by Id
-    		try{
-				if(m_alarmDao.deleteAlarmById(alarmId)>0){
-					LOG.warn("An Alarm [{}] is successfully deleted from the DB", alarmId);
-					
-					//Delete the events by alarmId
-					try{
-						if(m_eventDao.deleteEventByAlarmId(alarmId)>0){
-							LOG.warn("The event for the alarm [{}] is successfully deleted from the DB", alarmId);
-						} else {
-							LOG.warn("The event for alarm [{}] does not exist in the DB", alarmId);
-						}
-					} catch(Exception ex){
-						LOG.error("Unable to delete the event for the alarm [{}] from then DB", alarmId, ex);
-					}
-					
-					//Delete the acknowledgments by refId
-					try{
-						if(m_ackDao.deleteAcknowledgmentByRefId((int)alarmId)>0){
-							LOG.warn("The acknowledgment for the alarm [{}] is successfully deleted from the DB", alarmId);
-						} else {
-							LOG.warn("The acknowledgment for the alarm [{}] does not exist in the DB", alarmId);
-						}
-					} catch(Exception ex) {
-						LOG.error("Unable to delete the acknowledgment for the alarm [{}] from then DB", alarmId, ex);
-					}
-					
-				} else {
-					LOG.warn("An alarm [{}] does not exist in the DB", alarmId);
-				}
-    		} catch(Exception ex){
-    			LOG.error("Unable to delete an alarm [{}] from then DB", alarmId, ex);
-    		}
-    	}
+    public int purgeAlarm(int alarmId) {
+    	
+    	try{
+    		if(m_alarmDao.deleteAlarmById(alarmId)>0){
+    			LOG.warn("An Alarm ["+alarmId+"] is successfully deleted.");
+    			return 1;
+			} else {
+				LOG.warn("An Alarm ["+alarmId+"] does not exist in the DB");
+				return 0;
+			}
+		} catch(Exception ex){
+			ex.printStackTrace();
+			LOG.error("Unable to delete an alarm ["+alarmId+"] from then DB");
+		}
+    	
+    	return 0;
     }
+    
+    @Override
+    @Transactional
+    public int purgeEvent(int eventId) {
+    	try{
+			if(m_eventDao.deleteEventById(eventId)>0){
+				LOG.warn("An Event ["+eventId+"] is successfully deleted.");
+				return 1;
+			} else {
+				LOG.warn("An Event ["+eventId+"] does not exist in the DB");
+				return 0;
+			}
+		} catch(Exception ex){
+			ex.printStackTrace();
+			LOG.error("Unable to delete an event ["+eventId+"] from then DB");
+		}
+    	return 0;
+    }
+    
+    @Override
+    @Transactional
+    public int purgeAcknowledge(int refId) {
+		try{
+			if(m_ackDao.deleteAcknowledgmentByRefId(refId)>0){
+				LOG.warn("An Acknowledgment ["+refId+"] is successfully deleted.");
+				return 1;
+			} else {
+				LOG.warn("An Acknowledgment ["+refId+"] does not exist in the DB");
+				return 0;
+			}
+		} catch(Exception ex) {
+			ex.printStackTrace();
+			LOG.error("Unable to delete an acknowledgment ["+refId+"] from then DB");
+		}
+		return 0;
+    }
+    
 }

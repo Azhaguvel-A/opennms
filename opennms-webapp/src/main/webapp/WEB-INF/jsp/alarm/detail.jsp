@@ -107,6 +107,8 @@
     
     //Date format for an alarm events
     SimpleDateFormat formater = new SimpleDateFormat("MM/dd/yy hh:mm:ss aaa",Locale.ENGLISH);
+     //Get the action status for purge and export
+    String actionStatus = (String) req.getSession().getAttribute("actionStatus");
 		
     if(alarm == null){%>
 	<h3>An alarm with this id [ <%=alarmIdString%> ] was not found in Database</h3>
@@ -649,15 +651,15 @@
                 this alarm
             </td>
         </tr>
-        <% } // showEscalate || showClear %>     
-	<!-- 
+        <% } // showEscalate || showClear %>  
 		<tr class="<%=alarm.getSeverity().getLabel()%>">
 		    <td>
 			<form method="post" name="alarm_action_form">
+				
 				<div class="exportConfirmation" id="exportConfirmation" style="font-size:120%;display:none" >
 					<center>
-						<div id="alertText">&nbsp;</div><br>
-						Select your file format : 
+						<div id="alertText">&nbsp;</div>
+						<br>Select your file format : 
 						<input type="radio" name="format" value="PDF" checked="checked">PDF
 						<input type="radio" name="format" value="HTML">HTML
 						<input type="radio" name="format" value="CSV">CSV<br><br>
@@ -666,11 +668,8 @@
 					</center>
 				</div>
 				
-				<input type="hidden" name="nodeid" value="node=" />
-				<input type="hidden" name="exactuei" value="exactUei=" />
-				<input type="hidden" name="ipaddress" value="interface=" />
 				<input type="hidden" name="reportId" value="local_alarm-report" />
-				<div id="progressBar" class="jquery-ui-like"><div><center>Action in progress, Please wait...</center></div></div>
+				<input type="hidden" name="redirectPage" value="<%="/alarm/detail.htm" + "?" + request.getQueryString()%>" />
 				<div id="backgroundPopup"></div><body/>
 				<input type="hidden" name="actionCode"/>
 				<input type="hidden" name="alarm" value="<%=alarm.getId()%>"/>
@@ -679,7 +678,6 @@
 		    </td>
 		    <td>Export this alarm</td>
 		</tr>
-	-->
     </tbody>
 </table>
 
@@ -767,3 +765,18 @@
     }
 
 %>
+<script type="text/javascript">
+	//Action status for export
+	var actionStatus = "<%=actionStatus%>";
+	var seperateStatus = actionStatus.split(",");
+	if(seperateStatus[0] == "E"){
+		if(parseInt(seperateStatus[1]) >= 0){
+			alert("Your Job ["+seperateStatus[1]+"] is successfully created.Please wait, your export action is in progress...");
+		} else if(parseInt(seperateStatus[1]) == -2) {
+			alert("Already purge or export action is in progress, please try after some time...");
+		} else {
+			alert("Unable to create your job. Please check the log files");
+		}
+	}
+</script>
+<% request.getSession().setAttribute("actionStatus", "null"); %>
