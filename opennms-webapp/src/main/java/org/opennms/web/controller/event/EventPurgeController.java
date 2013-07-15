@@ -36,6 +36,7 @@ import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 
+import org.opennms.netmgt.dao.api.AlarmRepository;
 import org.opennms.web.event.WebEventRepository;
 import org.opennms.web.rest.EventBean;
 import org.opennms.web.rest.EventRestResource;
@@ -78,6 +79,11 @@ public class EventPurgeController extends AbstractController implements
 	private WebEventRepository m_webEventRepository;
 
 	/**
+	 * OpenNMS alarm repository
+	 */
+	private AlarmRepository m_alarmRepository;
+
+	/**
 	 * Logging
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(EventPurgeController.class);
@@ -106,6 +112,7 @@ public class EventPurgeController extends AbstractController implements
 	public void afterPropertiesSet() throws Exception {
 		Assert.notNull(m_redirectView, "redirectView must be set");
 		Assert.notNull(m_webEventRepository, "webEventRepository must be set");
+		Assert.notNull(m_alarmRepository, "alarmRepository must be set");
 	}
 
 	
@@ -219,6 +226,19 @@ public class EventPurgeController extends AbstractController implements
 	public void setWebEventRepository(WebEventRepository webEventRepository) {
 		m_webEventRepository = webEventRepository;
 		EventRestResource.setWebEventRepository(m_webEventRepository);
+	}
+
+	/**
+	 * <p>
+	 * setAlarmRepository
+	 * </p>
+	 * 
+	 * @param webAlarmRepository
+	 *            a {@link org.opennms.web.event.WebAlarmRepository} object.
+	 */
+	public void setAlarmRepository(AlarmRepository alarmRepository) {
+		m_alarmRepository = alarmRepository;
+		EventRestResource.setAlarmRepository(m_alarmRepository);
 	}
 
 }

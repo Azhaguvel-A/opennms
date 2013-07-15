@@ -22,7 +22,7 @@ import org.hibernate.ObjectNotFoundException;
 import org.opennms.api.reporting.ReportFormat;
 import org.opennms.core.utils.WebSecurityUtils;
 
-import org.opennms.netmgt.dao.AlarmRepository;
+import org.opennms.netmgt.dao.api.AlarmRepository;
 import org.opennms.netmgt.model.OnmsAlarm;
 import org.opennms.reporting.core.svclayer.ReportWrapperService;
 import org.opennms.web.event.AcknowledgeType;

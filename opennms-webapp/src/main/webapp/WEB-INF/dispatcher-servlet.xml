@@ -311,6 +311,7 @@
     <bean name="/event/purgeEvents" class="org.opennms.web.controller.event.EventPurgeController">
 	<property name="redirectView" value="/event/list.htm"/>
 	<property name="webEventRepository" ref="webEventRepository"/>
+        <property name="alarmRepository" ref="alarmRepository"/>
     </bean>
 
 <!-- Bean for EventExportController-->
